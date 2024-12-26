@@ -4,7 +4,7 @@ const verifyAdmin = (req, res, next) => {
     const token = req.cookies.token; // Lấy token từ HttpOnly cookie
 
     if (!token) {
-        return res.status(401).json({ message: 'Vui lòng đăng nhập' });
+        return res.status(401).json({ message: 'Please' });
     }
 
     try {

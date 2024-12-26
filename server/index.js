@@ -15,7 +15,7 @@ const corsOptions = {
     origin: 'http://localhost:3001', // Frontend origin cụ thể
     credentials: true, // Cho phép cookies hoặc header authorization
 };
-  
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser()) ;

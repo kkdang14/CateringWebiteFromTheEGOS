@@ -27,7 +27,7 @@ async function checkAdminPermission(to, from, next) {
         console.log('User:', user);
 
         if (user.success) {
-            if (user.isAdmin !== 0) {
+            if (user.user.isAdmin !== 0) {
                 next();
             } else {
                 toast.error('You do note have permission to access this page!', {

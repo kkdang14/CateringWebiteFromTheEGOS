@@ -127,7 +127,7 @@ const userLogout = asyncHandler(async (req, res) => {
         const isAdmin = decoded.Admin;
 
         // Clear the JWT cookie
-        res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+        res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'development' });
 
         // Respond with a message indicating the user who logged out
         res.status(200).json({
