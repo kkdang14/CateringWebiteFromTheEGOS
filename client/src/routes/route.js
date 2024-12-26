@@ -1,159 +1,138 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import authService from '@/services/auth.service';
+import { toast } from 'vue3-toastify';
+
+async function checkAdminAccess(to, from, next) {
+    try {
+        const user = await authService.checkToken();
+        console.log('User:', user);
+
+        if (user.success) {
+            next();
+        } else {
+            alert(user.message || 'You do not have permission to access this page');
+            next({ path: '/auth/adminLogin' });
+        }
+            
+    } catch (error) {
+        console.error('Error checking admin access', error);
+        alert("Error checking Admin access");
+        next('/');
+    }
+}
+
+async function checkAdminPermission(to, from, next) { 
+    try {
+        const user = await authService.checkToken();
+        console.log('User:', user);
+
+        if (user.success) {
+            if (user.isAdmin !== 0) {
+                next();
+            } else {
+                toast.error('You do note have permission to access this page!', {
+                    autoClose: 1200,
+                })
+                next('/admin');
+            }
+        } else {
+            alert(user.message || 'You do not have permission to access this page');
+            next({ path: '/auth/adminLogin' });
+        }
+            
+    } catch (error) {
+        console.error('Error', error);
+        alert("Error checking Admin permission");
+        next('/admin');
+    }
+}
 
 
 const routes = [
     {
         path: "/",
-        name: "home",
-        component: () => import('@/views/HomePage.vue'),
-        meta: { title: 'Home' },
-    },
-
-    {
-        path: "/shopping",
-        name: "product",
-        component: () => import('../views/ProductsPage.vue'),
-        meta: { title: 'Shopping' }
-    },
-
-    {
-        path: "/shopping/:id",
-        name: "product-detail",
-        component: () => import('../views/ProductDetail.vue'),
-    },
-
-    {
-        path: "/:pathMatch(.*)*",
-        name: "notfound",
-        component: () => import('../views/NotFound.vue'),
-        meta: { title: '404' }
-    },
-
-    {
-        path: "/manager",
-        name: "admin",
-        component: () => import('@/views/Admin.vue'),
-        meta: { title: 'Admin' },
-        beforeEnter: (to, from, next) => {
-            // Check if the user is logged in
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) {
-                alert("You must login before access this page")
-                next({name: 'login-admin'});
-            } else {
-                // Check if the user is an admin
-                const role = user.role;
-                if (role === 'admin') {
-                    // Allow access for admin users
-                    next()
-                } else {
-                    alert("Just admin can be access this page")
-                    // localStorage.removeItem('token');
-                    // localStorage.removeItem('user');
-                    next('/')
-                }
-            }
-        },
+        name: "defaut",
+        component: () => import('@/layouts/defaultLayout.vue'),
         children: [
-
             {
-                path: "product-management",
-                name: "product-management",
-                component: () => import("@/components/ProductManagement.vue"),
+                path: "",
+                name: "Home",
+                component: () => import('@/views/default/home.vue'),
+                meta: { title: 'Home' },
             },
 
             {
-                path: "add-product",
-                name: "add-product",
-                component: () => import("@/components/ProductAdd.vue"),
-            },
-
-            {
-                path: "product-form/:id",
-                name: "product-form",
-                component: () => import("../components/ProductForm.vue"),
-            },
-
-            {
-                path: "user-management",
-                name: "user-management",
-                component: () => import("@/components/UserManagement.vue")
-            },
-
-            {
-                path: "overall",
-                name: "overall",
-                component: () => import("@/components/OverallPage.vue")
-            },
-
-            {
-                path: "order",
-                name: "order",
-                component: () => import("@/components/OrderPage.vue")
-            },
+                path: "catering",
+                name: "Catering",
+                component: () => import('@/views/default/catering.vue'),
+                meta: { title: 'Catering' },
+            }
         ]
     },
 
     {
-        path: "/login",
-        name: "login",
-        component: () => import('../views/LoginPage.vue'),
-        meta: { title: 'Login' },
+        path: "/auth",
+        component: () => import('@/layouts/authLayout.vue'),
+        children: [
+            {
+                path: "login",
+                name: "Login",
+                component: () => import('@/views/auth/login.vue'),
+                meta: { title: 'Login' }
+            },
+            {
+                path: "register",
+                name: "Register",
+                component: () => import('@/views/auth/register.vue'),
+                meta: { title: 'Register' }
+            },
+
+            {
+                path: "adminLogin", 
+                name: "AdminLogin",
+                component: () => import('@/views/auth/adminLogin.vue'),
+                meta: { title: 'Admin Login' }
+            },
+        ],
     },
 
     {
-        path: "/login-admin",
-        name: "login-admin",
-        component: () => import('../views/LoginAdminPage.vue'),
-        meta: { title: 'Login Admin' },
+        path: "/admin",
+        name: "Admin",
+        component: () => import('@/layouts/adminLayout.vue'),
+        meta: { title: 'Admin' },
+        beforeEnter: checkAdminAccess,
+        children: [
+            {
+                path: "dashboard",
+                name: "Dashboard",
+                component: () => import('@/views/admin/dashboard.admin.vue'),
+                meta: { title: 'Dashboard' },
+            }, 
+
+            {
+                path: "product-management",
+                name: "ProductManagement",
+                component: () => import('@/views/admin/product.admin.vue'),
+                meta: { title: 'Product Management' },
+            },
+
+            {
+                path: "user-management",
+                name: "UserManagement",
+                component: () => import('@/views/admin/user.admin.vue'),
+                meta: { title: 'User Management' },
+                beforeEnter: checkAdminPermission,
+            },
+
+            {
+                path: "order-management",
+                name: "OrderManagement",
+                component: () => import('@/views/admin/order.admin.vue'),
+                meta: { title: 'Order Management' },
+            },   
+        ]
     },
-
-    {
-        path: "/register",
-        name: "register",
-        component: () => import('../views/RegisterPage.vue'),
-        meta: { title: 'Register' }
-    },
-
-    {
-        path: "/profile",
-        name: "profile",
-        component: () => import('../views/Profile.vue'),
-        meta: { title: 'Register' }
-    },
-
-    {
-        path: "/cart",
-        name: "cart",
-        component: () => import('../views/CartPage.vue'),
-        meta: { title: 'Cart' },
-        beforeEnter: (to, from, next) => {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) {
-                alert("You must login before access this page")
-                next('/login');
-            } else {
-                next()
-            }
-        },
-    },
-
-    {
-        path: "/favorite",
-        name: "favorite",
-        component: () => import('../views/FavoritePage.vue'),
-        meta: { title: 'Favorite' },
-        beforeEnter: (to, from, next) => {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) {
-                alert("You must login before access this page")
-                next('/login');
-            } else {
-                next()
-            }
-        },
-    }
-
 ];
 
 
